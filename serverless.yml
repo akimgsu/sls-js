@@ -32,6 +32,9 @@ provider:
       Action:
         - dynamodb:*
         - s3:*
+        - ses:*
+        - sns:SetSMSAttributes
+        - sns:Publish
       Resource: "*"
   apiGateway:
     apiKeys:
@@ -118,6 +121,13 @@ functions:
             parameters:
               paths:
                 proxy: true
+  sendEmail:
+    handler: src/lambdas/sendEmail.handler
+    events:
+      - http:
+          path: send-email
+          method: POST
+          cors: true
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details
@@ -176,3 +186,17 @@ resources:
           - AttributeName: ID
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
+    AssumeRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: testAssumeRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+                  - apigateway.amazonaws.com
+              Action:
+                - sts:AssumeRole
