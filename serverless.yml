@@ -1,202 +1,26 @@
-# Welcome to Serverless!
-#
-# This file is the main config file for your service.
-# It's very minimal at this point and uses default values.
-# You can always add more config options for more control.
-# We've included some commented out config examples here.
-# Just uncomment any of them to get that config option.
-#
-# For full config options, check the docs:
-#    docs.serverless.com
-#
-# Happy Coding!
-
-service: slsproject
-# app and org for use with dashboard.serverless.com
-#app: your-app-name
-#org: your-org-name
-
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
+service: myserverless-websocket
 frameworkVersion: '3'
 
 provider:
   name: aws
   runtime: nodejs14.x
   profile: cloud_user
-  environment:
-    tableName: ${self:custom.tableName}
-    bucketName: ${self:custom.bucketName}
+  region: us-east-1
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb:*
-        - s3:*
-        - ses:*
         - sns:SetSMSAttributes
         - sns:Publish
       Resource: "*"
-  apiGateway:
-    apiKeys:
-      - free:
-        - freeApiKey
-      - paid:
-        - paidApiKey
-    usagePlan:
-      - free:
-          quota:
-            limit: 20
-            period: MONTH
-          throttle:
-            rateLimit: 5
-            burstLimit: 20
-      - paid:
-          throttle:
-            rateLimit: 100
-            burstLimit: 200
-# you can overwrite defaults here
-#  stage: dev
-#  region: us-east-1
-
-plugins:
-  - serverless-s3-sync
-  - serverless-webpack
-
-package:
-  individually: true
 
 custom:
-  tableName: player-points
-  bucketName: test-1234test2-bucket
-  s3Sync:
-    - bucketName: ${self:custom.bucketName}
-      localDir: UploadData
+  tableName: WebsocketUsers
 
 functions:
-  getUser:
-    handler: src/lambdas/getUser.handler
+  sendSMS:
+    handler: src/lambdas/sms/sendSMS.handler
     events:
       - http:
-          path: get-user/{ID}
-          method: GET
-          cors: true
-          private: true
-  getPlayerScore:
-    handler: src/lambdas/getPlayerScore.handler
-    events:
-      - http:
-          path: get-player-score/{ID}
-          method: GET
-          cors: true
-  createPlayerScore:
-    handler: src/lambdas/createPlayerScore.handler
-    events:
-      - http:
-          path: create-player-score/{ID}
+          path: send-sms
           method: POST
           cors: true
-  createFile:
-    handler: src/lambdas/createFile.handler
-    events:
-      - http:
-          path: create-file/{fileName}
-          method: POST
-          cors: true
-  getFile:
-    handler: src/lambdas/getFile.handler
-    events:
-      - http:
-          path: get-file/{fileName}
-          method: GET
-          cors: true
-  proxy:
-    handler: src/lambdas/proxy.handler
-    events:
-      - http:
-          path: chuck-norris/{proxy+}
-          method: ANY
-          integration: http-proxy
-          request:
-            uri: http://api.icndb.com/{proxy}
-            parameters:
-              paths:
-                proxy: true
-  sendEmail:
-    handler: src/lambdas/sendEmail.handler
-    events:
-      - http:
-          path: send-email
-          method: POST
-          cors: true
-#    The following are a few example events you can configure
-#    NOTE: Please make sure to change your handler code to work with those events
-#    Check the event documentation for details
-#    events:
-#      - httpApi:
-#          path: /users/create
-#          method: get
-#      - websocket: $connect
-#      - s3: ${env:BUCKET}
-#      - schedule: rate(10 minutes)
-#      - sns: greeter-topic
-#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
-#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
-#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
-#      - iot:
-#          sql: "SELECT * FROM 'some_topic'"
-#      - cloudwatchEvent:
-#          event:
-#            source:
-#              - "aws.ec2"
-#            detail-type:
-#              - "EC2 Instance State-change Notification"
-#            detail:
-#              state:
-#                - pending
-#      - cloudwatchLog: '/aws/lambda/hello'
-#      - cognitoUserPool:
-#          pool: MyUserPool
-#          trigger: PreSignUp
-#      - alb:
-#          listenerArn: arn:aws:elasticloadbalancing:us-east-1:XXXXXX:listener/app/my-load-balancer/50dc6c495c0c9188/
-#          priority: 1
-#          conditions:
-#            host: example.com
-#            path: /hello
-
-#    Define function environment variables here
-#    environment:
-#      variable2: value2
-
-# you can add CloudFormation resource templates here
-resources:
-  Resources:
-    DemoBucketUpload:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.bucketName}
-    MyDynamoDbTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.tableName}
-        AttributeDefinitions:
-          - AttributeName: ID
-            AttributeType: S
-        KeySchema:
-          - AttributeName: ID
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-    AssumeRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: testAssumeRole
-        AssumeRolePolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-                  - apigateway.amazonaws.com
-              Action:
-                - sts:AssumeRole
