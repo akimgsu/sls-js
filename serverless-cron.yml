@@ -1,0 +1,31 @@
+service: myserverless
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  profile: cloud_user
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - comprehend:*
+        - ses:*
+      Resource: "*"
+
+functions:
+  analyse:
+    handler: src/lambdas/ind/analyse.handler
+    events:
+      - http:
+          path: analyse
+          method: POST
+          cors: true
+  sendReminder:
+    handler: src/lambdas/schedule/reminderEmail.handler
+    events:
+      - schedule: cron(0/5 * ? * MON-FRI *)
+  sendMorningNews:
+    handler: src/lambdas/schedule/morningNews.handler
+    events:
+      - schedule: cron(0/5 * ? * MON-FRI *)

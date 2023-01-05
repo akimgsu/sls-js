@@ -6,26 +6,77 @@ provider:
   runtime: nodejs14.x
   profile: cloud_user
   region: us-east-1
+  environment:
+    tableName: ${self:custom.tableName}
+    bucketName: ${self:custom.bucketName}
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - comprehend:*
+        - dynamodb:*
+        - s3:*
         - ses:*
       Resource: "*"
 
+plugins:
+    - serverless-webpack
+package:
+    individually: true
+
+custom:
+  tableName: player-points-table
+  bucketName: temp-sls-12355
+
 functions:
-  analyse:
-    handler: src/lambdas/ind/analyse.handler
+  getPlayerScore:
+    handler: src/lambdas/getPlayerScore.handler
     events:
       - http:
-          path: analyse
+          path: get-player-score/{ID}
+          method: GET
+          cors: true
+  createPlayerScore:
+    handler: src/lambdas/createPlayerScore.handler
+    events:
+      - http:
+          path: create-player-score/{ID}
           method: POST
           cors: true
-  sendReminder:
-    handler: src/lambdas/schedule/reminderEmail.handler
+  createFile:
+    handler: src/lambdas/createFile.handler
     events:
-      - schedule: cron(0/5 * ? * MON-FRI *)
-  sendMorningNews:
-    handler: src/lambdas/schedule/morningNews.handler
+      - http:
+          path: create-file/{fileName}
+          method: POST
+          cors: true
+  getFile:
+    handler: src/lambdas/getFile.handler
     events:
-      - schedule: cron(0/5 * ? * MON-FRI *)
+      - http:
+          path: get-file/{fileName}
+          method: GET
+          cors: true
+  sendEmail:
+    handler: src/lambdas/sendEmail.handler
+    events:
+      - http:
+          path: send-email
+          method: POST
+          cors: true
+
+resources:
+  Resources:
+    DemoBucketUpload:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+    MyDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
