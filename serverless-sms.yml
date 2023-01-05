@@ -1,0 +1,26 @@
+service: myserverless-websocket
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  profile: cloud_user
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - sns:SetSMSAttributes
+        - sns:Publish
+      Resource: "*"
+
+custom:
+  tableName: WebsocketUsers
+
+functions:
+  sendSMS:
+    handler: src/lambdas/sms/sendSMS.handler
+    events:
+      - http:
+          path: send-sms
+          method: POST
+          cors: true

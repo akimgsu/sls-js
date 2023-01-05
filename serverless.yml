@@ -1,4 +1,4 @@
-service: myserverless-websocket
+service: myserverless
 frameworkVersion: '3'
 
 provider:
@@ -9,18 +9,23 @@ provider:
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - sns:SetSMSAttributes
-        - sns:Publish
+        - comprehend:*
+        - ses:*
       Resource: "*"
 
-custom:
-  tableName: WebsocketUsers
-
 functions:
-  sendSMS:
-    handler: src/lambdas/sms/sendSMS.handler
+  analyse:
+    handler: src/lambdas/ind/analyse.handler
     events:
       - http:
-          path: send-sms
+          path: analyse
           method: POST
           cors: true
+  sendReminder:
+    handler: src/lambdas/schedule/reminderEmail.handler
+    events:
+      - schedule: cron(0/5 * ? * MON-FRI *)
+  sendMorningNews:
+    handler: src/lambdas/schedule/morningNews.handler
+    events:
+      - schedule: cron(0/5 * ? * MON-FRI *)
