@@ -16,7 +16,7 @@ const Dynamo = {
         console.log(data);
         return data.Item;
     },
-    async write(data, TableName) {
+    write: async (data, TableName) => {
         if (!data.ID) {
             throw Error('no ID')
         }
@@ -40,5 +40,27 @@ const Dynamo = {
 
         return documentClient.delete(params).promise();
     },
+    async update({ tableName, primaryKey, primaryKeyValue, updateKey, updateValue }) {
+        const params = {
+            TableName: tableName,
+            Key: { [primaryKey]: primaryKeyValue },
+            UpdateExpression: `set ${updateKey} = :updateValue`,
+            ExpressionAttributeValues: {
+                ':updateValue': updateValue,
+            },
+        };
+        return documentClient.update(params).promise();
+    },
+    // update: async ({ tableName, primaryKey, primaryKeyValue, updateKey, updateValue }) => {
+    //     const params = {
+    //         TableName: tableName,
+    //         Key: { [primaryKey]: primaryKeyValue },
+    //         UpdateExpression: `set ${updateKey} = :updateValue`,
+    //         ExpressionAttributeValues: {
+    //             ':updateValue': updateValue,
+    //         },
+    //     };
+    //     return documentClient.update(params).promise();
+    // },
 };
 module.exports = Dynamo;

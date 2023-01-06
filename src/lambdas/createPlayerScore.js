@@ -1,15 +1,20 @@
 const Responses = require('../commons/API_Responses');
 const Dynamo = require('../commons/Dynamo');
-const { withHooks } = require('../commons/hooks');
+const { withHooks, hooksWithValidation } = require('../commons/hooks');
+const yup = require('yup');
 
 const tableName = process.env.tableName;
 
-const handler = async event => {
-    if (!event.pathParameters.ID) {
-        // failed without an ID
-        return Responses._400({ message: 'missing the ID from the path' });
-    }
+const bodySchema = yup.object().shape({
+    name: yup.string().required(),
+    score: yup.number().required(),
+});
 
+const pathSchema = yup.object().shape({
+    ID: yup.string().required(),
+});
+
+const handler = async event => {
     let ID = event.pathParameters.ID;
     const user = event.body;
     user.ID = ID;
@@ -23,4 +28,4 @@ const handler = async event => {
     return Responses._200({ newUser });
 };
 
-exports.handler = withHooks(handler);
+exports.handler = hooksWithValidation({ bodySchema, pathSchema })(handler);
