@@ -9,6 +9,8 @@ provider:
   environment:
     tableName: ${self:custom.tableName}
     bucketName: ${self:custom.bucketName}
+    imageUploadBucket: ${self:custom.imageUploadBucket}
+    region: ${self:provider.region}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -25,6 +27,7 @@ package:
 custom:
   tableName: player-points-table
   bucketName: temp-sls-12355
+  imageUploadBucket: temp-sls-12357
 
 functions:
   getPlayerScore:
@@ -76,6 +79,22 @@ functions:
           path: send-email
           method: POST
           cors: true
+  imageUpload:
+    handler: src/lambdas/imageUpload.handler
+    events:
+      - http:
+          path: image-upload
+          method: POST
+          cors: true
+  imageResize:
+    handler: src/lambdas/imageResize.handler
+    events:
+      - s3:
+          bucket: ${self:custom.imageUploadBucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: uploads/
+          existing: true
 
 resources:
   Resources:
@@ -83,6 +102,11 @@ resources:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.bucketName}
+    ImageUploadBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.imageUploadBucket}
+        AccessControl: PublicRead
     MyDynamoDbTable:
       Type: AWS::DynamoDB::Table
       Properties:
